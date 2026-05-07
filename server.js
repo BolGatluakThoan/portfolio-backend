@@ -23,7 +23,6 @@ import emailTemplateRoutes from './routes/emailTemplateRoutes.js';
 import { trackVisitor } from './middleware/trackVisitor.js';
 import visitorRoutes from './routes/visitorRoutes.js';
 
-
 // Get __dirname equivalent in ES modules
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -45,8 +44,15 @@ connectDB();
 const app = express();
 
 // CORS configuration
+const allowedOrigins = [
+  'http://localhost:5173',
+  'http://localhost:3000',
+  'http://127.0.0.1:5173',
+  process.env.CLIENT_URL
+].filter(Boolean);
+
 app.use(cors({
-  origin: ['http://localhost:5173', 'http://localhost:3000', 'http://127.0.0.1:5173', 'https://your-frontend.vercel.app'],
+  origin: allowedOrigins,
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
@@ -59,7 +65,7 @@ app.use(express.urlencoded({ extended: true }));
 // Serve uploaded files statically
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
-// ========== TRACKING MIDDLEWARE - MUST BE BEFORE ROUTES ==========
+// ========== TRACKING MIDDLEWARE ==========
 app.use(trackVisitor);
 
 // ========== ROUTES ==========
@@ -107,7 +113,7 @@ const PORT = process.env.PORT || 5000;
 const server = app.listen(PORT, () => {
   console.log(`✅ Server running on port ${PORT}`);
   console.log(`📍 Environment: ${process.env.NODE_ENV || 'development'}`);
-  console.log(`🔗 Frontend URL: http://localhost:5173`);
+  console.log(`🔗 Frontend URL: ${process.env.CLIENT_URL || 'http://localhost:5173'}`);
   console.log(`📁 Uploads directory: ${path.join(__dirname, 'uploads')}`);
 });
 
