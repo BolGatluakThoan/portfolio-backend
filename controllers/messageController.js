@@ -9,7 +9,7 @@ dotenv.config();
 // Initialize Resend
 const resend = new Resend(process.env.RESEND_API_KEY);
 const SITE_NAME = process.env.SITE_NAME || 'Bol Portfolio';
-const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:5173';
+const FRONTEND_URL = process.env.CLIENT_URL || 'http://localhost:5173';
 
 // Send email function
 const sendEmail = async (to, from, subject, html) => {
@@ -87,7 +87,6 @@ export const sendMessage = async (req, res) => {
     // Send user auto-reply
     if (autoReplyEnabled && userTemplate && userTemplate.html && userTemplate.subject) {
       try {
-        // Prepare user-specific variables
         const userVariables = {
           name: name || 'there',
           subject: subject || '',
@@ -96,7 +95,6 @@ export const sendMessage = async (req, res) => {
           ...commonVariables
         };
         
-        // Replace variables in HTML and subject
         let userHtml = replaceVariables(userTemplate.html, userVariables);
         let userSubject = replaceVariables(userTemplate.subject, userVariables);
         
@@ -109,7 +107,6 @@ export const sendMessage = async (req, res) => {
     // Send admin notification
     if (adminTemplate && adminTemplate.html && adminTemplate.subject) {
       try {
-        // Prepare admin-specific variables
         const adminVariables = {
           name: name || 'Unknown',
           email: email || '',
@@ -118,7 +115,6 @@ export const sendMessage = async (req, res) => {
           ...commonVariables
         };
         
-        // Replace variables in HTML and subject
         let adminHtml = replaceVariables(adminTemplate.html, adminVariables);
         let adminSubject = replaceVariables(adminTemplate.subject, adminVariables);
         
@@ -142,7 +138,7 @@ export const sendMessage = async (req, res) => {
 
 // @desc    Get all messages
 // @route   GET /api/messages
-// @access  Private
+// @access   Private
 export const getMessages = async (req, res) => {
   try {
     const messages = await Message.find().sort('-createdAt');
@@ -154,7 +150,7 @@ export const getMessages = async (req, res) => {
 
 // @desc    Get single message
 // @route   GET /api/messages/:id
-// @access  Private
+// @access   Private
 export const getMessage = async (req, res) => {
   try {
     const message = await Message.findById(req.params.id);
@@ -169,7 +165,7 @@ export const getMessage = async (req, res) => {
 
 // @desc    Mark message as read
 // @route   PUT /api/messages/:id/read
-// @access  Private
+// @access   Private
 export const markAsRead = async (req, res) => {
   try {
     const message = await Message.findByIdAndUpdate(
@@ -188,7 +184,7 @@ export const markAsRead = async (req, res) => {
 
 // @desc    Delete message
 // @route   DELETE /api/messages/:id
-// @access  Private
+// @access   Private
 export const deleteMessage = async (req, res) => {
   try {
     const message = await Message.findByIdAndDelete(req.params.id);
@@ -206,7 +202,7 @@ export const deleteMessage = async (req, res) => {
 
 // @desc    Mark message as replied
 // @route   PUT /api/messages/:id/replied
-// @access  Private
+// @access   Private
 export const markAsReplied = async (req, res) => {
   try {
     const message = await Message.findByIdAndUpdate(
@@ -225,7 +221,7 @@ export const markAsReplied = async (req, res) => {
 
 // @desc    Get unread messages count
 // @route   GET /api/messages/unread/count
-// @access  Private
+// @access   Private
 export const getUnreadCount = async (req, res) => {
   try {
     const count = await Message.countDocuments({ read: false });
