@@ -3,7 +3,6 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import path from 'path';
 import { fileURLToPath } from 'url';
-// import morgan from 'morgan'; // Removed - no more console logs
 import connectDB from './config/db.js';
 import authRoutes from './routes/authRoutes.js';
 import navbarRoutes from './routes/navbarRoutes.js';
@@ -23,32 +22,31 @@ import emailTemplateRoutes from './routes/emailTemplateRoutes.js';
 import { trackVisitor } from './middleware/trackVisitor.js';
 import visitorRoutes from './routes/visitorRoutes.js';
 
-// Get __dirname equivalent in ES modules
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 dotenv.config();
 
-// Validate required environment variables
+// Validate required env vars
 const requiredEnvVars = ['MONGODB_URI', 'JWT_SECRET'];
 requiredEnvVars.forEach(varName => {
   if (!process.env[varName]) {
-    console.error(`❌ Error: ${varName} is not defined in environment variables`);
+    console.error(`❌ Missing: ${varName}`);
     process.exit(1);
   }
 });
 
-// Connect to database
+// Connect DB
 connectDB();
 
 const app = express();
 
-// CORS configuration
+/* =========================
+   CORS CONFIG (FIXED)
+========================= */
 const allowedOrigins = [
-  'http://localhost:5173',
-  'http://localhost:3000',
-  'http://127.0.0.1:5173',
-  process.env.CLIENT_URL
+  process.env.CLIENT_URL,
+  'http://localhost:5173'
 ].filter(Boolean);
 
 app.use(cors({
@@ -60,15 +58,16 @@ app.use(cors({
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-// app.use(morgan('dev')); // Removed - no more HTTP request logs
 
-// Serve uploaded files statically
+// Serve uploads
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
-// ========== TRACKING MIDDLEWARE ==========
+// Track visitors
 app.use(trackVisitor);
 
-// ========== ROUTES ==========
+/* =========================
+   ROUTES
+========================= */
 app.use('/api/auth', authRoutes);
 app.use('/api/navbar', navbarRoutes);
 app.use('/api/hero', heroRoutes);
@@ -85,39 +84,59 @@ app.use('/api/newsletter', newsletterRoutes);
 app.use('/api/email-templates', emailTemplateRoutes);
 app.use('/api/visitors', visitorRoutes);
 
-// Health check endpoint
-app.get('/api/health', (req, res) => {
-  res.json({ 
-    status: 'OK', 
-    message: 'Server is running',
-    timestamp: new Date().toISOString(),
+/* =========================
+   HEALTH CHECK (FIXED)
+========================= */
+app.get('/', (req, res) => {
+  res.json({
+    status: 'Backend is running 🚀',
+    time: new Date().toISOString(),
     mongodb: mongoose.connection.readyState === 1 ? 'connected' : 'disconnected'
   });
 });
 
-// Error handling middleware
+app.get('/api/health', (req, res) => {
+  res.json({
+    status: 'OK',
+    message: 'Server is running',
+    mongodb: mongoose.connection.readyState === 1 ? 'connected' : 'disconnected'
+  });
+});
+
+/* =========================
+   ERROR HANDLING
+========================= */
 app.use((err, req, res, next) => {
   console.error('❌ Error:', err.stack);
-  res.status(500).json({ 
-    message: 'Something went wrong!', 
+  res.status(500).json({
+    message: 'Something went wrong!',
     error: process.env.NODE_ENV === 'development' ? err.message : 'Internal server error'
   });
 });
 
-// 404 handler
+/* =========================
+   404 HANDLER
+========================= */
 app.use((req, res) => {
-  res.status(404).json({ message: `Route ${req.originalUrl} not found` });
+  res.status(404).json({
+    message: `Route ${req.originalUrl} not found`
+  });
 });
 
+/* =========================
+   START SERVER
+========================= */
 const PORT = process.env.PORT || 5000;
+
 const server = app.listen(PORT, () => {
   console.log(`✅ Server running on port ${PORT}`);
   console.log(`📍 Environment: ${process.env.NODE_ENV || 'development'}`);
-  console.log(`🔗 Frontend URL: ${process.env.CLIENT_URL || 'http://localhost:5173'}`);
-  console.log(`📁 Uploads directory: ${path.join(__dirname, 'uploads')}`);
+  console.log(`🌐 Frontend URL: ${process.env.CLIENT_URL}`);
 });
 
-// Handle unhandled promise rejections
+/* =========================
+   CRASH HANDLING
+========================= */
 process.on('unhandledRejection', (err) => {
   console.error('❌ Unhandled Rejection:', err);
   server.close(() => process.exit(1));
